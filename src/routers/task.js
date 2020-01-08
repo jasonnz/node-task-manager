@@ -53,7 +53,12 @@ router.patch('/tasks/:id', async (req, res) => {
     if (!isValidOperation) return res.status(400).send({ error: 'Invalid updates!' })
 
     try {
-        const task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
+        
+        const task = await Task.findById(req.params.id)
+        updates.forEach((prop) => task[prop] = req.body[prop])
+
+        await task.save() // Invokes moongose middleware
+        //const task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
 
         if (!task) return res.status(404).send()
 
