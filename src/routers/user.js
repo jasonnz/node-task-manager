@@ -1,8 +1,9 @@
 const express = require('express')
 const User = require('../models/user')
+const auth = require('../middleware/auth')
 const router = new express.Router()
 
-router.get('/users', async (req, res) => {
+router.get('/users/me', auth, async (req, res) => {
 
     // User.find({}).then((users) => {
     //   res.status(200)
@@ -12,13 +13,7 @@ router.get('/users', async (req, res) => {
     //   res.send(`${error}`)
     // })
 
-    try {
-        const user = await User.find({})
-        res.status(200).send(user)
-    } catch (error) {
-        res.status(500).send(error)
-    }
-
+    res.send(req.user)
 })
 
 router.get('/users/:id', async (req, res) => {
@@ -74,6 +69,31 @@ router.patch('/users/:id', async (req, res) => {
     }
 })
 
+router.post('/users/logout', auth, async (req, res) => {
+    try {
+        req.user.tokens = req.user.tokens.filter((token) => {
+            return token.token !== req.token
+        })
+        
+        await req.user.save()
+        res.status(201).send()
+
+    } catch (error) {
+        res.status(500).send()
+    }
+})
+
+router.post("/users/logoutAll", auth, async (req, res) => {
+  try {
+    req.user.tokens = []
+
+    await req.user.save();
+    res.status(201).send();
+  } catch (error) {
+    res.status(500).send();
+  }
+});
+
 router.post('/users', async (req, res) => {
     const user = new User(req.body)
 
@@ -105,7 +125,6 @@ router.post('/users/login', async (req, res) => {
 
     } catch (error) {
         console.log(error)
-        
         res.status(400).send(error)
     }
 
@@ -116,9 +135,7 @@ router.delete('/users/:id', async (req, res) => {
     try {
 
         const user = await User.findByIdAndDelete(req.params.id)
-
         if (!user) return res.status(404).send()
-
         res.status(202).send(user)
 
     } catch (error) {
