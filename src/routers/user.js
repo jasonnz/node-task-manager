@@ -16,31 +16,31 @@ router.get('/users/me', auth, async (req, res) => {
     res.send(req.user)
 })
 
-router.get('/users/:id', async (req, res) => {
-    const _id = req.params.id
-    if (!_id.match(/^[0-9a-fA-F]{24}$/)) return res.status(404).send({ error: 'Not a valid _id!' })
+// router.get('/users/:id', async (req, res) => {
+//     const _id = req.params.id
+//     if (!_id.match(/^[0-9a-fA-F]{24}$/)) return res.status(404).send({ error: 'Not a valid _id!' })
 
-    // User.findById(_id).then((user) => {
-    //   if (!user) return res.status(404).send({ error: 'No user found!' })
-    //   res.status(200)
-    //   res.send(user)
-    // }).catch((error) => {
-    //   res.status(500)
-    //   res.send(`${error}`)
-    // })
+//     // User.findById(_id).then((user) => {
+//     //   if (!user) return res.status(404).send({ error: 'No user found!' })
+//     //   res.status(200)
+//     //   res.send(user)
+//     // }).catch((error) => {
+//     //   res.status(500)
+//     //   res.send(`${error}`)
+//     // })
 
-    try {
-        const user = await User.findById(_id)
-        if (!user) return res.status(404).send({ error: 'No user found!' })
-        res.status(200)
-        res.send(user)
-    } catch (error) {
-        res.status(500).send(error)
-    }
+//     try {
+//         const user = await User.findById(_id)
+//         if (!user) return res.status(404).send({ error: 'No user found!' })
+//         res.status(200)
+//         res.send(user)
+//     } catch (error) {
+//         res.status(500).send(error)
+//     }
 
-})
+// })
 
-router.patch('/users/:id', async (req, res) => {
+router.patch('/users/me', auth, async (req, res) => {
 
     const updates = Object.keys(req.body)
     const allowedUpdates = ['name', 'email', 'password', 'age']
@@ -52,7 +52,8 @@ router.patch('/users/:id', async (req, res) => {
 
     try {
         
-        const user = await User.findById(req.params.id)
+        // const user = await User.findById(req.params.id)
+        const user = req.user
         updates.forEach((prop) => user[prop] = req.body[prop])
         
         await user.save() // Invokes moongose middleware
@@ -60,7 +61,7 @@ router.patch('/users/:id', async (req, res) => {
         // By passes mongoose middleware
         //const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
 
-        if (!user) return res.status(404).send()
+        // if (!user) return res.status(404).send()
 
         res.status(201).send(user)
 
@@ -130,14 +131,14 @@ router.post('/users/login', async (req, res) => {
 
 })
 
-router.delete('/users/:id', async (req, res) => {
+router.delete('/users/me', auth,  async (req, res) => {
 
     try {
-
-        const user = await User.findByIdAndDelete(req.params.id)
-        if (!user) return res.status(404).send()
-        res.status(202).send(user)
-
+        // const user = await User.findByIdAndDelete(req.user._id)
+        // if (!user) return res.status(404).send()
+        // res.status(202).send(user)
+        await req.user.remove()
+        res.status(202).send(req.user);
     } catch (error) {
         res.status(400).send(error)
     }
