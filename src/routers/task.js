@@ -1,8 +1,9 @@
 const express = require('express')
 const Task = require('../models/task')
+const auth = require("../middleware/auth");
 const router = new express.Router()
 
-router.get('/tasks', async (req, res) => {
+router.get('/tasks', auth, async (req, res) => {
     // Task.find({}).then((task) => {
     //   res.status(200)
     //   res.send(task)
@@ -12,15 +13,24 @@ router.get('/tasks', async (req, res) => {
     // })
 
     try {
-        const task = await Task.find({})
-        res.status(200).send(task)
+
+        // const task = await Task.find({owner: req.user._id})
+        // if (!task) return res.status(404).send({ error: 'No task found!' })
+        // res.status(200).send(task)
+        
+        // Or can use this way
+        await req.user.populate('tasks').execPopulate()
+        res.status(200).send(req.user.tasks)
+
     } catch (error) {
+        console.log(error)
         res.status(500).send(error)
     }
 
 })
 
-router.get('/tasks/:id', async (req, res) => {
+router.get('/tasks/:id', auth, async (req, res) => {
+   
     const _id = req.params.id
     if (!_id.match(/^[0-9a-fA-F]{24}$/)) return res.status(404).send({ error: 'Not a valid _id!' })
     // Task.findById(_id).then((task) => {
@@ -33,16 +43,18 @@ router.get('/tasks/:id', async (req, res) => {
     // })
 
     try {
-        const task = await Task.findById(_id)
+        // const task = await Task.findById(_id)
+        // const task = await Task.findOne({_id: req.user._id})
+
+        const task = await Task.findOne({ _id: req.params.id, owner: req.user._id })
         if (!task) return res.status(404).send({ error: 'No task found!' })
-        res.status(200)
-        res.send(task)
+        res.status(200).send(task)
     } catch (error) {
         res.status(500).send(error)
     }
 })
 
-router.patch('/tasks/:id', async (req, res) => {
+router.patch('/tasks/:id', auth, async (req, res) => {
 
     const updates = Object.keys(req.body)
     const allowedUpdates = ['completed', 'description']
@@ -54,13 +66,14 @@ router.patch('/tasks/:id', async (req, res) => {
 
     try {
         
-        const task = await Task.findById(req.params.id)
-        updates.forEach((prop) => task[prop] = req.body[prop])
-
-        await task.save() // Invokes moongose middleware
-        //const task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
+        const task = await Task.findOne({_id: req.params.id, owner: req.user._id}) 
+        // const task = await Task.findById(req.params.id)
 
         if (!task) return res.status(404).send()
+        
+        updates.forEach((prop) => task[prop] = req.body[prop])
+        await task.save() // Invokes moongose middleware
+        //const task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
 
         res.status(201).send(task)
 
@@ -69,7 +82,7 @@ router.patch('/tasks/:id', async (req, res) => {
     }
 })
 
-router.post("/tasks", async (req, res) => {
+router.post("/tasks", auth, async (req, res) => {
 
     // const task = new Task(req.body)
     //   task.save().then(() => {
@@ -80,7 +93,14 @@ router.post("/tasks", async (req, res) => {
     //     res.send(`${error}`)
     //   })
 
-    const task = new Task(req.body)
+    // const task = new Task(req.body)
+    
+    // Use the ES6 Spread operator ...req.body
+    const task = new Task({
+      ...req.body,
+      owner: req.user._id
+    });
+
 
     try {
         await task.save()
@@ -91,11 +111,15 @@ router.post("/tasks", async (req, res) => {
 
 })
 
-router.delete('/tasks/:id', async (req, res) => {
+router.delete('/tasks/:id', auth, async (req, res) => {
 
     try {
 
-        const task = await Task.findByIdAndDelete(req.params.id)
+        // const task = await Task.find({owner: req.user._id})
+        // if (!task) return res.status(404).send({ error: 'No task found!' })
+        // res.status(200).send(task)
+
+        const task = await Task.findOneAndDelete({ _id: req.params.id, owner: req.user._id })
 
         if (!task) return res.status(404).send()
 
