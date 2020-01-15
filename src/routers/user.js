@@ -1,7 +1,13 @@
 const express = require('express')
 const User = require('../models/user')
 const auth = require('../middleware/auth')
+const multer = require('multer')
 const router = new express.Router()
+
+const upload = multer({
+  dest: 'avatars'
+});
+
 
 router.get('/users/me', auth, async (req, res) => {
 
@@ -130,6 +136,10 @@ router.post('/users/login', async (req, res) => {
     }
 
 })
+
+router.post('/users/me/avatar', upload.single('avatar'), (req, res) => {
+  res.status(200).send();
+});
 
 router.delete('/users/me', auth,  async (req, res) => {
 
