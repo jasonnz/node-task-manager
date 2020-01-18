@@ -5,9 +5,22 @@ const multer = require('multer')
 const router = new express.Router()
 
 const upload = multer({
-  dest: 'avatars'
-});
+  
+  dest: 'avatar',
+  limits : {
+      fileSize: 1000000
+  },
+  fileFilter: function (req, file, cb) {
+        console.log('Hello 2')
+        if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+            console.log('Should be an error')
+            return cb(new Error('PLEASE UPLOAD AN IMAGE FILE'))
+        }
 
+        console.log('Should not come here')
+        cb(undefined, true)
+  }
+})
 
 router.get('/users/me', auth, async (req, res) => {
 
@@ -138,8 +151,12 @@ router.post('/users/login', async (req, res) => {
 })
 
 router.post('/users/me/avatar', upload.single('avatar'), (req, res) => {
-  res.status(200).send();
-});
+    console.log('Hello 1')
+    res.status(200).send()
+}, (error, req, res, next) => {
+    res.status(400).send({error: error.message})
+    next()
+})
 
 router.delete('/users/me', auth,  async (req, res) => {
 
