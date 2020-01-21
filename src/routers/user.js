@@ -1,6 +1,7 @@
 const express = require('express')
 const User = require('../models/user')
 const auth = require('../middleware/auth')
+const sharp = require("sharp");
 const multer = require('multer')
 const router = new express.Router()
 
@@ -17,6 +18,21 @@ const upload = multer({
     }
 })
 
+router.get('/users/:id/avatar', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id)
+
+        if (!user || !user.avatar) {
+            throw new Error()
+        }
+
+        res.set('Content-Type', 'image/png')
+        res.send(user.avatar)
+    } catch (e) {
+        res.status(404).send()
+    }
+})
+
 router.get('/users/me', auth, async (req, res) => {
 
     // User.find({}).then((users) => {
@@ -29,30 +45,6 @@ router.get('/users/me', auth, async (req, res) => {
 
     res.send(req.user)
 })
-
-// router.get('/users/:id', async (req, res) => {
-//     const _id = req.params.id
-//     if (!_id.match(/^[0-9a-fA-F]{24}$/)) return res.status(404).send({ error: 'Not a valid _id!' })
-
-//     // User.findById(_id).then((user) => {
-//     //   if (!user) return res.status(404).send({ error: 'No user found!' })
-//     //   res.status(200)
-//     //   res.send(user)
-//     // }).catch((error) => {
-//     //   res.status(500)
-//     //   res.send(`${error}`)
-//     // })
-
-//     try {
-//         const user = await User.findById(_id)
-//         if (!user) return res.status(404).send({ error: 'No user found!' })
-//         res.status(200)
-//         res.send(user)
-//     } catch (error) {
-//         res.status(500).send(error)
-//     }
-
-// })
 
 router.patch('/users/me', auth, async (req, res) => {
 
@@ -146,7 +138,11 @@ router.post('/users/login', async (req, res) => {
 })
 
 router.post('/users/me/avatar', auth, upload.single('avatar'), async (req, res) => {
-    req.user.avatar = req.file.buffer
+    const buffer = await sharp(req.file.buffer)
+      .resize({ width: 250, height: 250 })
+      .png()
+      .toBuffer();
+    req.user.avatar = buffer
     await req.user.save()
     res.status(200).send()
 }, (error, req, res, next) => {
@@ -162,7 +158,6 @@ router.delete('/users/me/avatar', auth, async (req, res) => {
     res.status(400).send({ error: error.message })
     next()
 })
-
 
 router.delete('/users/me', auth,  async (req, res) => {
 

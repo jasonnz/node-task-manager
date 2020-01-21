@@ -1,6 +1,6 @@
 
-const validator = require("validator")
-const mongoose = require("mongoose")
+const validator = require('validator')
+const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const Task = require('./task')
@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema({
     trim: true,
     validate(value) {
       if (value.toLowerCase().includes('password')) {
-        throw new Error('Password cannot contain "password"')
+        throw new Error('Password cannot contain the word password')
       }
     }
   },
@@ -79,11 +79,15 @@ userSchema.methods.generateAuthToken = async function () {
   return token
 }
 
+// Returns the object as a JSON representation
 userSchema.methods.toJSON = function (params) {
   const user = this
   const userObject = user.toObject()
+  
+  // removes key value pairs from the returned object
   delete userObject.password
   delete userObject.tokens
+  delete userObject.avatar
 
   return userObject
 }
@@ -124,6 +128,6 @@ userSchema.pre('remove', async function (next) {
   next()
 })
 
-const User = mongoose.model("User", userSchema)
+const User = mongoose.model('User', userSchema)
 
 module.exports = User
