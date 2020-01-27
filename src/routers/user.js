@@ -1,9 +1,10 @@
 const express = require('express')
 const User = require('../models/user')
 const auth = require('../middleware/auth')
-const sharp = require("sharp");
+const sharp = require('sharp')
 const multer = require('multer')
 const router = new express.Router()
+const { sendWelcomeEmail, sendCancelationEmail } = require("../emails/account");
 
 const upload = multer({
   limits : {
@@ -114,6 +115,7 @@ router.post('/users', async (req, res) => {
 
     try {
         await user.save()
+        sendWelcomeEmail(user.email, user.name)
         const token = await user.generateAuthToken();
         res.status(201).send({user, token})
     } catch (error) {
@@ -165,8 +167,9 @@ router.delete('/users/me', auth,  async (req, res) => {
         // const user = await User.findByIdAndDelete(req.user._id)
         // if (!user) return res.status(404).send()
         // res.status(202).send(user)
+        sendCancelationEmail(req.user.email, req.user.name);
         await req.user.remove()
-        res.status(202).send(req.user);
+        res.status(202).send(req.user)
     } catch (error) {
         res.status(400).send(error)
     }
