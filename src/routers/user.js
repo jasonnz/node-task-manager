@@ -157,7 +157,7 @@ router.delete('/users/me/avatar', auth, async (req, res) => {
     await req.user.save()
     res.status(200).send()
 }, (error, req, res, next) => {
-    res.status(400).send({ error: error.message })
+    res.status(401).send({ error: error.message })
     next()
 })
 
@@ -171,7 +171,7 @@ router.delete('/users/me', auth,  async (req, res) => {
         await req.user.remove()
         res.status(202).send(req.user)
     } catch (error) {
-        res.status(400).send(error)
+        res.status(401).send(error)
     }
 
 })
