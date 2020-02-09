@@ -55,7 +55,10 @@ router.patch('/users/me', auth, async (req, res) => {
         return allowedUpdates.includes(item)
     })
 
-    if (!isValidOperation) res.status(400).send({ error: 'Invalid updates!' })
+    if (!isValidOperation) {
+        res.status(400).send({ error: 'Invalid updates!' })
+        return
+    }
 
     try {
         
@@ -75,6 +78,8 @@ router.patch('/users/me', auth, async (req, res) => {
     } catch (error) {
         res.status(400).send(error)
     }
+    
+    return
 })
 
 router.post('/users/logout', auth, async (req, res) => {
