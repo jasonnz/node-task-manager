@@ -5,10 +5,10 @@ const {
     userOneId, 
     userOne, 
     userTwo, 
-    configureDatabase
+    setupDatabase
 } = require('./fixtures/db')
 
-beforeEach(configureDatabase)
+beforeEach(setupDatabase)
 
 test('Should sign up a new user', async () => {
     const response = await request(app).post('/users').send({
@@ -48,8 +48,8 @@ test('Should login an existing user', async () => {
 
 test('Should not login nonexistent user', async () => {
     await request(app).post('/users/login').send({
-        email: userTwo.email,
-        password: userTwo.password
+        email: 'jon@test.com',
+        password: 'ASfghksj#$567'
     }).expect(400)
 })
 
